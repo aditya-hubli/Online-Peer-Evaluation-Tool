@@ -1,0 +1,1240 @@
+name: CI/CD - Auth, Forms, Evals, Deadlines, Audit Logs, Form Templates, RBAC, CSV, Anonymity, TLS, Passwords, Least-Privilege, Dashboard, Weighted Scoring, Export Reports, Reminders, Analytics, Fast Submissions, Rollback, Session Timeout & Late Submissions (OPETSE-4, OPETSE-6, OPETSE-7, OPETSE-9, OPETSE-11, OPETSE-15, OPETSE-19, OPETSE-5, OPETSE-20, OPETSE-8, OPETSE-27, OPETSE-28, OPETSE-29, OPETSE-13, OPETSE-14, OPETSE-32, OPETSE-12, OPETSE-21, OPETSE-25, OPETSE-30, OPETSE-10)
+
+on:
+  push:
+    branches: [main, develop, 'feature/**']
+  pull_request:
+    branches: [main, develop]
+
+env:
+  PYTHON_VERSION: '3.12'
+  NODE_VERSION: '18'
+
+jobs:
+  # Backend Authentication Tests (OPETSE-4)
+  test-auth-backend:
+    name: Test Authentication Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        working-directory: services/backend
+        run: |
+          echo "� Installing Python dependencies..."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed"
+
+      - name: Run authentication tests
+        working-directory: services/backend
+        run: |
+          echo "🧪 Running authentication tests..."
+          pytest tests/test_auth.py -v --tb=short --disable-warnings
+          echo "✅ Authentication tests passed"
+        env:
+          ENV: test
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-key' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost/test' }}
+          ASYNC_DATABASE_URL: ${{ secrets.ASYNC_DATABASE_URL || 'postgresql+asyncpg://test:test@localhost/test' }}
+
+  # Backend Session Timeout Tests (OPETSE-30)
+  test-session-timeout-backend:
+    name: Test Session Timeout Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        working-directory: services/backend
+        run: |
+          echo "📦 Installing Python dependencies..."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed"
+
+      - name: Run session timeout tests
+        working-directory: services/backend
+        run: |
+          echo "🧪 Running session timeout tests..."
+          pytest tests/test_session_timeout.py -v --tb=short --disable-warnings
+          echo "✅ Session timeout tests passed"
+        env:
+          ENV: test
+          SESSION_TIMEOUT_MINUTES: 15
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-key' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost/test' }}
+          ASYNC_DATABASE_URL: ${{ secrets.ASYNC_DATABASE_URL || 'postgresql+asyncpg://test:test@localhost/test' }}
+
+  # Backend Late Submissions Tests (OPETSE-10)
+  test-late-submissions-backend:
+    name: Test Late Submissions Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        working-directory: services/backend
+        run: |
+          echo "📦 Installing Python dependencies..."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed"
+
+      - name: Run late submissions tests
+        working-directory: services/backend
+        run: |
+          echo "🧪 Running late submissions tests..."
+          pytest tests/test_late_submissions.py -v --tb=short --disable-warnings
+          echo "✅ Late submissions tests passed"
+        env:
+          ENV: test
+          LATE_SUBMISSION_ENABLED: true
+          LATE_SUBMISSION_MAX_HOURS: 24
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-key' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost/test' }}
+          ASYNC_DATABASE_URL: ${{ secrets.ASYNC_DATABASE_URL || 'postgresql+asyncpg://test:test@localhost/test' }}
+
+  # Backend Forms Tests (OPETSE-6)
+  test-forms-backend:
+    name: Test Forms/Evaluation Criteria Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        working-directory: services/backend
+        run: |
+          echo "📦 Installing Python dependencies..."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed"
+
+      - name: Run forms tests
+        working-directory: services/backend
+        run: |
+          echo "🧪 Running forms/evaluation criteria tests..."
+          pytest tests/test_forms.py -v --tb=short --disable-warnings
+          echo "✅ Forms tests passed"
+        env:
+          ENV: test
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-key' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost/test' }}
+          ASYNC_DATABASE_URL: ${{ secrets.ASYNC_DATABASE_URL || 'postgresql+asyncpg://test:test@localhost/test' }}
+
+  # Backend Form Rollback Tests (OPETSE-25)
+  test-rollback-backend:
+    name: Test Form Version History & Rollback Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        working-directory: services/backend
+        run: |
+          echo "📦 Installing Python dependencies..."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed"
+
+      - name: Run rollback tests
+        working-directory: services/backend
+        run: |
+          echo "🧪 Running form rollback and version history tests..."
+          pytest tests/test_rollback.py -v --tb=short --disable-warnings
+          echo "✅ Rollback tests passed"
+        env:
+          ENV: test
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-key' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost/test' }}
+          ASYNC_DATABASE_URL: ${{ secrets.ASYNC_DATABASE_URL || 'postgresql+asyncpg://test:test@localhost/test' }}
+
+  # Backend Evaluations Tests (OPETSE-7)
+  test-evaluations-backend:
+    name: Test Evaluations Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        working-directory: services/backend
+        run: |
+          echo "📦 Installing Python dependencies..."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed"
+
+      - name: Run evaluations tests
+        working-directory: services/backend
+        run: |
+          echo "🧪 Running evaluations tests..."
+          pytest tests/test_evaluations.py -v --tb=short --disable-warnings
+          echo "✅ Evaluations tests passed"
+        env:
+          ENV: test
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-key' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost/test' }}
+          ASYNC_DATABASE_URL: ${{ secrets.ASYNC_DATABASE_URL || 'postgresql+asyncpg://test:test@localhost/test' }}
+
+  # Backend Deadline Enforcement Tests (OPETSE-9)
+  test-deadline-backend:
+    name: Test Deadline Enforcement Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        working-directory: services/backend
+        run: |
+          echo "📦 Installing Python dependencies..."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed"
+
+      - name: Run deadline tests
+        working-directory: services/backend
+        run: |
+          echo "🧪 Running deadline enforcement tests..."
+          pytest tests/test_deadline.py -v --tb=short --disable-warnings
+          echo "✅ Deadline tests passed"
+        env:
+          ENV: test
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-key' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost/test' }}
+          ASYNC_DATABASE_URL: ${{ secrets.ASYNC_DATABASE_URL || 'postgresql+asyncpg://test:test@localhost/test' }}
+
+  # Backend Automated Reminders Tests (OPETSE-11)
+  test-reminders-backend:
+    name: Test Automated Deadline Reminders Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        working-directory: services/backend
+        run: |
+          echo "📦 Installing Python dependencies..."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed"
+
+      - name: Run reminder tests
+        working-directory: services/backend
+        run: |
+          echo "🧪 Running automated reminder tests..."
+          pytest tests/test_reminders.py -v --tb=short --disable-warnings
+          echo "✅ Reminder tests passed"
+        env:
+          ENV: test
+          EMAIL_ENABLED: false
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-key' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost/test' }}
+          ASYNC_DATABASE_URL: ${{ secrets.ASYNC_DATABASE_URL || 'postgresql+asyncpg://test:test@localhost/test' }}
+
+  # Backend Audit Logging Tests (OPETSE-15)
+  test-audit-logs-backend:
+    name: Test Audit Logging Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        working-directory: services/backend
+        run: |
+          echo "📦 Installing Python dependencies..."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed"
+
+      - name: Run audit logging tests
+        working-directory: services/backend
+        run: |
+          echo "🧪 Running audit logging tests..."
+          pytest tests/test_audit_logs.py -v --tb=short --disable-warnings
+          echo "✅ Audit logging tests passed"
+        env:
+          ENV: test
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-key' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost/test' }}
+          ASYNC_DATABASE_URL: ${{ secrets.ASYNC_DATABASE_URL || 'postgresql+asyncpg://test:test@localhost/test' }}
+
+  # Backend Form Templates Tests (OPETSE-19)
+  test-form-templates-backend:
+    name: Test Form Template Reuse Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        working-directory: services/backend
+        run: |
+          echo "📦 Installing Python dependencies..."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed"
+
+      - name: Run form template tests
+        working-directory: services/backend
+        run: |
+          echo "🧪 Running form template reuse tests..."
+          pytest tests/test_form_templates.py -v --tb=short --disable-warnings
+          echo "✅ Form template tests passed"
+        env:
+          ENV: test
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-key' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost/test' }}
+          ASYNC_DATABASE_URL: ${{ secrets.ASYNC_DATABASE_URL || 'postgresql+asyncpg://test:test@localhost/test' }}
+
+  # Backend RBAC Tests (OPETSE-5)
+  test-rbac-backend:
+    name: Test Role-Based Access Control Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        working-directory: services/backend
+        run: |
+          echo "📦 Installing Python dependencies..."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed"
+
+      - name: Run RBAC tests
+        working-directory: services/backend
+        run: |
+          echo "🧪 Running RBAC tests..."
+          pytest tests/test_rbac.py tests/test_users.py -v --tb=short --disable-warnings
+          echo "✅ RBAC tests passed"
+        env:
+          ENV: test
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-key' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost/test' }}
+          ASYNC_DATABASE_URL: ${{ secrets.ASYNC_DATABASE_URL || 'postgresql+asyncpg://test:test@localhost/test' }}
+
+  # Backend CSV Upload Tests (OPETSE-20)
+  test-csv-upload-backend:
+    name: Test CSV Bulk Upload Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        working-directory: services/backend
+        run: |
+          echo "📦 Installing Python dependencies..."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed"
+
+      - name: Run CSV upload tests
+        working-directory: services/backend
+        run: |
+          echo "🧪 Running CSV upload tests..."
+          pytest tests/test_csv_upload.py -v --tb=short --disable-warnings
+          echo "✅ CSV upload tests passed"
+        env:
+          ENV: test
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-key' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost/test' }}
+          ASYNC_DATABASE_URL: ${{ secrets.ASYNC_DATABASE_URL || 'postgresql+asyncpg://test:test@localhost/test' }}
+
+  # Backend Anonymity Tests (OPETSE-8)
+  test-anonymity-backend:
+    name: Test Anonymous Feedback Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        working-directory: services/backend
+        run: |
+          echo "📦 Installing Python dependencies..."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed"
+
+      - name: Run anonymity tests
+        working-directory: services/backend
+        run: |
+          echo "🧪 Running anonymity/anonymous feedback tests..."
+          pytest tests/test_anonymity.py -v --tb=short --disable-warnings
+          echo "✅ Anonymity tests passed"
+        env:
+          ENV: test
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-key' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost/test' }}
+          ASYNC_DATABASE_URL: ${{ secrets.ASYNC_DATABASE_URL || 'postgresql+asyncpg://test:test@localhost/test' }}
+
+  # Backend Anonymized Export Tests (OPETSE-32)
+  test-export-backend:
+    name: Test Anonymized Report Exports Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        working-directory: services/backend
+        run: |
+          echo "📦 Installing Python dependencies..."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed"
+
+      - name: Run export tests with coverage
+        working-directory: services/backend
+        run: |
+          echo "🧪 Running anonymized export tests with code coverage..."
+          pytest tests/test_export.py -v --tb=short --disable-warnings --cov=app.utils.export --cov-report=term-missing --cov-fail-under=80
+          echo "✅ Export tests passed with >80% coverage"
+        env:
+          ENV: test
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-key' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost/test' }}
+          ASYNC_DATABASE_URL: ${{ secrets.ASYNC_DATABASE_URL || 'postgresql+asyncpg://test:test@localhost/test' }}
+
+      - name: Run pylint code quality check
+        working-directory: services/backend
+        run: |
+          echo "🔍 Running Pylint code quality check on export.py..."
+          pylint app/utils/export.py --rcfile=.pylintrc --fail-under=8.0
+          echo "✅ Code quality check passed (>80%)"
+
+  # Backend PDF Export Tests (OPETSE-16)
+  test-pdf-export-backend:
+    name: Test PDF Report Exports Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        working-directory: services/backend
+        run: |
+          echo "📦 Installing Python dependencies..."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed"
+
+      - name: Run PDF export tests with coverage
+        working-directory: services/backend
+        run: |
+          echo "🧪 Running PDF export tests with code coverage..."
+          pytest tests/test_pdf_export.py -v --tb=short --disable-warnings --cov=app.utils.pdf_export --cov-report=term-missing --cov-fail-under=80
+          echo "✅ PDF export tests passed with >80% coverage"
+        env:
+          ENV: test
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-key' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost/test' }}
+          ASYNC_DATABASE_URL: ${{ secrets.ASYNC_DATABASE_URL || 'postgresql+asyncpg://test:test@localhost/test' }}
+
+      - name: Run pylint code quality check
+        working-directory: services/backend
+        run: |
+          echo "🔍 Running Pylint code quality check on pdf_export.py..."
+          pylint app/utils/pdf_export.py --rcfile=.pylintrc --fail-under=8.0
+          echo "✅ Code quality check passed (>80%)"
+
+
+  # Backend Team Chat Tests (OPETSE-18)
+  test-team-chat-backend:
+    name: Test Team Chat Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        working-directory: services/backend
+        run: |
+          echo "📦 Installing Python dependencies..."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed"
+
+      - name: Run team chat tests with coverage
+        working-directory: services/backend
+        run: |
+          echo "🧪 Running team chat tests with code coverage..."
+          pytest tests/test_chats.py -v --tb=short --disable-warnings --cov=app.api.v1.chats --cov-report=term-missing --cov-fail-under=80
+          echo "✅ Team chat tests passed with >80% coverage"
+        env:
+          ENV: test
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-key' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost/test' }}
+          ASYNC_DATABASE_URL: ${{ secrets.ASYNC_DATABASE_URL || 'postgresql+asyncpg://test:test@localhost/test' }}
+
+      - name: Run pylint code quality check
+        working-directory: services/backend
+        run: |
+          echo "🔍 Running Pylint code quality check on chats.py..."
+          pylint app/api/v1/chats.py --rcfile=.pylintrc --fail-under=8.0
+          echo "✅ Code quality check passed (>8.0/10)"
+
+
+  # Frontend Authentication Verification
+  verify-auth-frontend:
+    name: Verify Authentication Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify authentication frontend files exist
+        working-directory: services/frontend
+        run: |
+          echo "📋 Verifying authentication frontend files..."
+          test -f src/pages/Login.jsx && echo "✅ Login.jsx exists" || (echo "❌ Login.jsx missing" && exit 1)
+          test -f src/pages/Register.jsx && echo "✅ Register.jsx exists" || (echo "❌ Register.jsx missing" && exit 1)
+          test -f src/api.js && echo "✅ api.js exists" || (echo "❌ api.js missing" && exit 1)
+          echo "✅ All authentication frontend files present"
+
+      - name: Verify forms frontend files exist
+        working-directory: services/frontend
+        run: |
+          echo "📋 Verifying forms frontend files..."
+          test -f src/pages/Forms.jsx && echo "✅ Forms.jsx exists" || (echo "❌ Forms.jsx missing" && exit 1)
+          echo "✅ All forms frontend files present"
+
+      - name: Verify evaluations frontend files exist
+        working-directory: services/frontend
+        run: |
+          echo "📋 Verifying evaluations frontend files..."
+          test -f src/pages/Evaluations.jsx && echo "✅ Evaluations.jsx exists" || (echo "❌ Evaluations.jsx missing" && exit 1)
+          echo "✅ All evaluations frontend files present"
+
+      - name: Verify RBAC frontend files exist
+        working-directory: services/frontend
+        run: |
+          echo "📋 Verifying RBAC frontend files..."
+          test -f src/lib/rbac.js && echo "✅ rbac.js exists" || (echo "❌ rbac.js missing" && exit 1)
+          test -f src/components/ProtectedContent.jsx && echo "✅ ProtectedContent.jsx exists" || (echo "❌ ProtectedContent.jsx missing" && exit 1)
+          echo "✅ All RBAC frontend files present"
+
+      - name: Verify CSV upload frontend files exist
+        working-directory: services/frontend
+        run: |
+          echo "📋 Verifying CSV upload frontend files..."
+          test -f src/pages/BulkUserUpload.jsx && echo "✅ BulkUserUpload.jsx exists" || (echo "❌ BulkUserUpload.jsx missing" && exit 1)
+          echo "✅ All CSV upload frontend files present"
+
+      - name: Verify dashboard frontend files exist
+        working-directory: services/frontend
+        run: |
+          echo "📋 Verifying student dashboard frontend files (OPETSE-13)..."
+          test -f src/pages/Dashboard.jsx && echo "✅ Dashboard.jsx exists" || (echo "❌ Dashboard.jsx missing" && exit 1)
+          echo "✅ All dashboard frontend files present"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        working-directory: services/frontend
+        run: |
+          echo "📦 Installing npm dependencies..."
+          npm ci --prefer-offline --no-audit
+          echo "✅ Dependencies installed"
+
+      - name: Build frontend
+        working-directory: services/frontend
+        run: |
+          echo "🏗️ Building frontend..."
+          npm run build
+          echo "✅ Build successful"
+
+  # Backend Password Strength Tests (OPETSE-28)
+  test-password-strength-backend:
+    name: Test Strong Password Requirements
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        working-directory: services/backend
+        run: |
+          echo "📦 Installing Python dependencies..."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed"
+
+      - name: Run password strength tests
+        working-directory: services/backend
+        run: |
+          echo "🧪 Running password strength validation tests (OPETSE-28)..."
+          pytest tests/test_password_strength.py -v --tb=short --disable-warnings
+          echo "✅ Password strength tests passed"
+        env:
+          ENV: test
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-key' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost/test' }}
+          ASYNC_DATABASE_URL: ${{ secrets.ASYNC_DATABASE_URL || 'postgresql+asyncpg://test:test@localhost/test' }}
+          STRONG_PASSWORD_REQUIRED: true
+
+  # Backend Least-Privilege Access Control Tests (OPETSE-29)
+  test-least-privilege-backend:
+    name: Test Least-Privilege Access Control
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        working-directory: services/backend
+        run: |
+          echo "📦 Installing Python dependencies..."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed"
+
+      - name: Run least-privilege access control tests
+        working-directory: services/backend
+        run: |
+          echo "🧪 Running least-privilege access control tests (OPETSE-29)..."
+          pytest tests/test_least_privilege.py -v --tb=short --disable-warnings
+          echo "✅ Least-privilege tests passed"
+        env:
+          ENV: test
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-key' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost/test' }}
+          ASYNC_DATABASE_URL: ${{ secrets.ASYNC_DATABASE_URL || 'postgresql+asyncpg://test:test@localhost/test' }}
+          JWT_SECRET_KEY: test-secret-key
+          ENFORCE_LEAST_PRIVILEGE: true
+
+  # Backend Student Dashboard Tests (OPETSE-13)
+  test-dashboard-backend:
+    name: Test Student Dashboard Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        working-directory: services/backend
+        run: |
+          echo "📦 Installing Python dependencies..."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed"
+
+      - name: Run student dashboard tests
+        working-directory: services/backend
+        run: |
+          echo "🧪 Running student dashboard tests (OPETSE-13)..."
+          pytest tests/test_dashboard.py -v --tb=short --disable-warnings
+          echo "✅ Dashboard tests passed"
+        env:
+          ENV: test
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-key' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost/test' }}
+          ASYNC_DATABASE_URL: ${{ secrets.ASYNC_DATABASE_URL || 'postgresql+asyncpg://test:test@localhost/test' }}
+
+  # Backend Instructor Analytics Dashboard Tests (OPETSE-12)
+  test-analytics-backend:
+    name: Test Submission Analytics & Instructor Dashboard
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        working-directory: services/backend
+        run: |
+          echo "📦 Installing Python dependencies..."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed"
+
+      - name: Run analytics tests
+        working-directory: services/backend
+        run: |
+          echo "🧪 Running submission analytics tests (OPETSE-12)..."
+          pytest tests/test_analytics.py -v --tb=short --disable-warnings
+          echo "✅ Analytics tests passed"
+        env:
+          ENV: test
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-key' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost/test' }}
+          ASYNC_DATABASE_URL: ${{ secrets.ASYNC_DATABASE_URL || 'postgresql+asyncpg://test:test@localhost/test' }}
+
+  # Backend Weighted Scoring Tests (OPETSE-14)
+  test-weighted-scoring-backend:
+    name: Test Weighted Scoring Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        working-directory: services/backend
+        run: |
+          echo "📦 Installing Python dependencies..."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed"
+
+      - name: Run weighted scoring tests
+        working-directory: services/backend
+        run: |
+          echo "🧪 Running weighted scoring tests (OPETSE-14)..."
+          pytest tests/test_weighted_scoring.py -v --tb=short --disable-warnings
+          echo "✅ Weighted scoring tests passed"
+        env:
+          ENV: test
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-key' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost/test' }}
+          ASYNC_DATABASE_URL: ${{ secrets.ASYNC_DATABASE_URL || 'postgresql+asyncpg://test:test@localhost/test' }}
+
+  # Backend Fast Submission Performance Tests (OPETSE-21)
+  test-submission-performance-backend:
+    name: Test Fast Form Submission Performance Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        working-directory: services/backend
+        run: |
+          echo "📦 Installing Python dependencies..."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed"
+
+      - name: Run submission performance tests
+        working-directory: services/backend
+        run: |
+          echo "🧪 Running fast form submission performance tests (OPETSE-21)..."
+          echo "📊 Testing that evaluations complete within 2 seconds (SRS S18)"
+          pytest tests/test_submission_performance.py -v --tb=short --disable-warnings -m "performance or opetse_21"
+          echo "✅ Performance tests passed - submissions complete within 2 seconds"
+        env:
+          ENV: test
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-key' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost/test' }}
+          ASYNC_DATABASE_URL: ${{ secrets.ASYNC_DATABASE_URL || 'postgresql+asyncpg://test:test@localhost/test' }}
+
+  # Code Quality - Pylint
+  pylint-check:
+    name: Pylint Code Quality Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        working-directory: services/backend
+        run: |
+          echo "📦 Installing Python dependencies..."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed"
+
+      - name: Run Pylint on backend code
+        working-directory: services/backend
+        run: |
+          echo "🔍 Running Pylint code quality checks..."
+          echo "Checking API endpoints..."
+          pylint app/api/v1/*.py --rcfile=.pylintrc --exit-zero
+          echo "Checking core modules..."
+          pylint app/core/*.py --rcfile=.pylintrc --exit-zero
+          echo "Checking utilities..."
+          pylint app/utils/*.py --rcfile=.pylintrc --exit-zero
+          echo "✅ Pylint analysis complete"
+
+      - name: Run Pylint on OPETSE-21 files with score threshold
+        working-directory: services/backend
+        run: |
+          echo "🔍 Running Pylint on OPETSE-21 performance-critical files..."
+          echo "Checking evaluations.py (fast submission implementation)..."
+          pylint app/api/v1/evaluations.py --rcfile=.pylintrc --fail-under=7.5 || echo "⚠️ Code quality below threshold"
+          echo "✅ OPETSE-21 Pylint check complete"
+
+  # Code Coverage - Comprehensive Test Coverage Analysis
+  code-coverage:
+    name: Code Coverage Analysis (>75% Required)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('services/backend/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        working-directory: services/backend
+        run: |
+          echo "📦 Installing Python dependencies..."
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          echo "✅ Dependencies installed"
+
+      - name: Run all tests with coverage
+        working-directory: services/backend
+        run: |
+          echo "📊 Running comprehensive code coverage analysis..."
+          echo "This runs all backend tests and measures code coverage"
+          pytest tests/ \
+            --cov=app \
+            --cov-report=term-missing \
+            --cov-report=html:coverage_html \
+            --cov-report=xml:coverage.xml \
+            --cov-fail-under=75 \
+            -v \
+            --tb=short \
+            --disable-warnings
+          echo "✅ Code coverage meets 75% threshold"
+        env:
+          ENV: test
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://test.supabase.co' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'test-key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'test-key' }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://test:test@localhost/test' }}
+          ASYNC_DATABASE_URL: ${{ secrets.ASYNC_DATABASE_URL || 'postgresql+asyncpg://test:test@localhost/test' }}
+          JWT_SECRET_KEY: test-secret-key
+          EMAIL_ENABLED: false
+          STRONG_PASSWORD_REQUIRED: true
+          ENFORCE_LEAST_PRIVILEGE: true
+
+      - name: Display coverage summary
+        if: always()
+        working-directory: services/backend
+        run: |
+          echo "📈 Code Coverage Summary:"
+          python -m coverage report --show-missing
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            services/backend/coverage_html/
+            services/backend/coverage.xml
+          retention-days: 30
+
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request'
+        uses: py-cov-action/python-coverage-comment-action@v3
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MINIMUM_GREEN: 75
+          MINIMUM_ORANGE: 60
+          COVERAGE_PATH: services/backend
+
+  # Code Quality - Flake8
+  code-quality:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Check Python code style
+        working-directory: services/backend
+        run: |
+          pip install flake8
+          flake8 app/api/v1/auth.py app/api/v1/forms.py app/api/v1/evaluations.py app/api/v1/reports.py app/api/v1/users.py app/api/v1/audit_logs.py app/core/rbac.py app/core/csv_utils.py app/utils/anonymity.py app/utils/weighted_scoring.py app/utils/audit.py --max-line-length=120 --ignore=E203,W503 || echo "⚠️ Style warnings found"

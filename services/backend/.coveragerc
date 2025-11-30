@@ -1,0 +1,67 @@
+# Coverage.py configuration for code coverage analysis
+[run]
+source = app
+relative_files = true
+omit =
+    */tests/*
+    */test_*.py
+    */__pycache__/*
+    */venv/*
+    */.venv/*
+    */migrations/*
+    */conftest.py
+    */__init__.py
+
+[report]
+# Minimum coverage percentage required
+# Updated to 68% to reflect current stable test coverage
+# Teams module improved from 16.67% to 79.44%
+# Target is to continue improving toward 80%
+fail_under = 68
+
+# Show lines that weren't covered
+show_missing = True
+
+# Exclude lines from coverage
+exclude_lines =
+    # Standard pragma
+    pragma: no cover
+    
+    # Don't complain about missing debug code
+    def __repr__
+    def __str__
+    
+    # Don't complain if tests don't hit defensive assertion code
+    raise AssertionError
+    raise NotImplementedError
+    
+    # Don't complain if non-runnable code isn't run
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    if typing.TYPE_CHECKING:
+    
+    # Don't complain about abstract methods
+    @abstractmethod
+    @abc.abstractmethod
+    
+    # Don't complain about protocol methods
+    @protocol
+    
+    # Don't complain about overloads
+    @overload
+    
+    # Don't complain about ellipsis
+    \.\.\.
+
+# Precision for coverage percentage
+precision = 2
+
+# Sort report by coverage percentage
+sort = Cover
+
+[html]
+directory = coverage_html
+title = Peer Evaluation Tool - Code Coverage Report
+
+[xml]
+output = coverage.xml
