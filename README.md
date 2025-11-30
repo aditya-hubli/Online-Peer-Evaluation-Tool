@@ -2,7 +2,6 @@
 
 A modern web-based platform for managing peer evaluations in educational and team-based project environments. Built with React, FastAPI, and PostgreSQL.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/downloads/)
 [![React 18.3](https://img.shields.io/badge/react-18.3.1-61DAFB.svg)](https://reactjs.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg)](https://fastapi.tiangolo.com/)
@@ -137,8 +136,6 @@ Complete audit trail of form changes with ability to restore previous versions.
 
 ### DevOps
 
-- **Vercel** - Frontend deployment
-- **Railway/Render** - Backend hosting
 - **GitHub** - Version control
 - **Environment Management** - Separate configurations for dev/staging/production
 
@@ -294,73 +291,6 @@ The application will be available at `http://localhost:3000`
 5. Students can submit evaluations
 6. View analytics and generate reports
 
-## Deployment
-
-### Vercel (Frontend)
-
-1. Connect your GitHub repository to Vercel
-2. Configure environment variables:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-   - `VITE_API_URL`
-3. Deploy automatically on push to main branch
-
-Manual deployment:
-```bash
-cd services/frontend
-npm run build
-vercel --prod
-```
-
-### Railway/Render (Backend)
-
-**Railway:**
-1. Create new project from GitHub repository
-2. Add environment variables
-3. Set start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-4. Deploy
-
-**Render:**
-1. Create new Web Service
-2. Build Command: `pip install -r requirements.txt`
-3. Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-4. Add environment variables
-5. Deploy
-
-### Docker (Optional)
-
-Backend Dockerfile:
-```dockerfile
-FROM python:3.13-slim
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
-```
-
-Frontend Dockerfile:
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
-FROM nginx:alpine
-COPY --from=0 /app/dist /usr/share/nginx/html
-```
-
-## API Documentation
-
-### Interactive Documentation
-
-Visit these URLs when the backend is running:
-
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
-- OpenAPI JSON: `http://localhost:8000/openapi.json`
-
 ### API Endpoints
 
 #### Authentication
@@ -503,10 +433,6 @@ Contributions are welcome. Please follow these steps:
 - Python: Follow PEP 8
 - JavaScript: Use Prettier formatting
 - Commits: Use conventional commits format
-
-## License
-
-This project is licensed under the MIT License.
 
 ## Author
 
