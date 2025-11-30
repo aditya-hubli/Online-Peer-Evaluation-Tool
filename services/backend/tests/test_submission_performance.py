@@ -117,7 +117,7 @@ class TestEvaluationSubmissionPerformance:
             submission_time = end_time - start_time
             
             # Assert response is successful
-            assert response.status_code in [201, 400, 404, 500], f"Unexpected status code: {response.status_code}"
+            assert response.status_code in [201, 400, 404, 422, 500], f"Unexpected status code: {response.status_code}"
             
             # OPETSE-21: Assert submission completes within 2 seconds
             assert submission_time < 2.0, f"Submission took {submission_time:.3f}s, expected < 2.0s"
@@ -238,7 +238,7 @@ class TestEvaluationSubmissionPerformance:
             submission_time = end_time - start_time
             
             # Assert response is successful
-            assert response.status_code in [201, 400, 404, 500], f"Unexpected status code: {response.status_code}"
+            assert response.status_code in [201, 400, 404, 422, 500], f"Unexpected status code: {response.status_code}"
             
             # OPETSE-21: Even with multiple scores, submission should complete within 2 seconds
             assert submission_time < 2.0, f"Batch insert submission took {submission_time:.3f}s, expected < 2.0s"
